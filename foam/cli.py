@@ -119,16 +119,18 @@ def reset(folders=None):
 
     paths_to_reset = []
     tracked_roots = []
-    
-    for backup_path in BACKUP_DIR.iterdir():
-        if backup_path.is_dir():
-            relative_path = backup_path.relative_to(BACKUP_DIR)
-            if sys.platform.startswith('win'):
-                drive = relative_path.parts[0] + ':\\'
-                root_path = Path(drive, *relative_path.parts[1:])
-            else:
-                root_path = Path('/') / Path(*relative_path.parts)
-            tracked_roots.append((root_path, backup_path))
+
+    for backup_drive_path in BACKUP_DIR.iterdir():
+        if backup_drive_path.is_dir():
+            for backup_folder_path in backup_drive_path.iterdir():
+                if backup_folder_path.is_dir():
+                    relative_path = backup_folder_path.relative_to(BACKUP_DIR)
+                    if sys.platform.startswith('win'):
+                        drive = relative_path.parts[0] + ':\\'
+                        root_path = Path(drive, *relative_path.parts[1:])
+                    else:
+                        root_path = Path('/') / Path(*relative_path.parts)
+                    tracked_roots.append((root_path, backup_folder_path))
 
     stats = {
         'directories': set(),
@@ -139,7 +141,7 @@ def reset(folders=None):
 
     for root_path, root_backup_path in tracked_roots:
         stats['root_dirs'].add(str(root_path))
-        
+
         for backup_path in root_backup_path.rglob('*'):
             relative_path = backup_path.relative_to(root_backup_path)
             original_path = root_path / relative_path
